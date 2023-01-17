@@ -1,0 +1,201 @@
+<html>
+
+<head>
+    <title>Transloadit Valentine</title>
+    <link href="https://releases.transloadit.com/uppy/v3.3.1/uppy.min.css" rel="stylesheet">
+</head>
+
+<style>
+    :root {
+        --primary: #9d8189;
+        --secondary: #f8edeb;
+        --accent: 255, 77, 109;
+    }
+
+    body {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        background-color: var(--secondary);
+    }
+
+    h1,
+    p {
+        color: var(--primary);
+        margin: 0;
+        font-family: 'Rubik', sans-serif;
+    }
+
+    #result {
+        border-radius: 10px;
+        max-width: 40vw;
+        border: none;
+        contain: content;
+        aspect-ratio: 1/1;
+        margin: 2rem;
+    }
+
+    .input-container {
+        margin: 1rem;
+        font-family: 'Rubik', sans-serif;
+        color: var(--primary);
+    }
+
+    input {
+        border: none;
+        border-bottom: 2px var(--primary) dashed;
+        background-color: transparent;
+        text-align: start;
+        font: inherit;
+        color: rgb(var(--accent));
+    }
+
+    input:focus {
+        outline: none;
+    }
+
+    .uppy-Dashboard-innerWrap {
+        background-color: var(--secondary);
+        border: var(--primary) 2px dashed;
+    }
+
+    .uppy-Dashboard-AddFiles {
+        border: 0px !important;
+    }
+
+    .uppy-Dashboard-poweredBy,
+    .uppy-Dashboard-poweredByIcon {
+        color: var(--primary) !important;
+        stroke: var(--primary);
+        font-family: 'Segoe UI', sans-serif;
+    }
+
+    .uppy-Dashboard-AddFiles-title,
+    .uppy-DashboardTab-name {
+        color: var(--primary);
+        font-family: 'Segoe UI', sans-serif;
+    }
+
+    .uppy-DashboardTab-btn:hover {
+        background-color: rgba(var(--accent), 0.2) !important;
+    }
+
+    .uppy-Dashboard-browse,
+    .uppy-ProviderIconBg,
+    .uppy-DashboardContent-back,
+    .uppy-StatusBar-actionBtn {
+        color: rgb(var(--accent));
+        fill: rgb(var(--accent));
+    }
+
+    .uppy-DashboardContent-bar,
+    .uppy-StatusBar-actions,
+    .uppy-StatusBar,
+    .uppy-StatusBar::before {
+        border: none !important;
+        background-color: transparent !important;
+    }
+
+    .uppy-StatusBar-actionBtn--upload {
+        background-color: rgb(var(--accent)) !important;
+        color: var(--secondary) !important;
+        border: none;
+        border-radius: 5px;
+        font-family: 'Segoe UI', sans-serif;
+    }
+</style>
+
+<body>
+    <h1>Transloadit Valentine</h1>
+    <p>Upload a picture of your valentine and we'll make it a valentine card!</p>
+
+    <div class="input-container">
+        <label for="name">Name:</label>
+        <input id="name" name="name" maxlength="12">
+    </div>
+
+    <div id="drag-drop-area"></div>
+
+    <img id="result" />
+
+    <script type="module">
+        import { Uppy, Dashboard, Transloadit, ImageEditor } from "https://releases.transloadit.com/uppy/v3.3.1/uppy.min.mjs"
+
+        const baseParams = {
+            auth: { key: "72a70fba93ce41cba617cfd7c2a44b1a" },
+            steps: {
+                watermark: {
+                    use: ":original",
+                    robot: "/image/resize",
+                    width: "1921",
+                    height: "1921",
+                    resize_strategy: "fillcrop",
+                    watermark_url: "https://imgur.com/rF1HytT.png",
+                    watermark_size: "100%",
+                    watermark_position: "center",
+                    imagemagick_stack: "v2.0.7"
+                },
+                add_text: {
+                    use: "watermark",
+                    robot: "/image/resize",
+                    text: [
+                        {
+                            text: "Happy Valentines Day!",
+                            // font: "Rubik-Regular",
+                            size: 110,
+                            color: "#ffffff",
+                            valign: "bottom",
+                            y_offset: -90,
+                            x_offset: -100
+                        }
+                    ],
+                    imagemagick_stack: "v2.0.7"
+                }
+            }
+        }
+
+        function updateName(val) {
+            if (val) {
+                const params = baseParams
+                params.steps.add_text.text[0].text = "Happy Valentines " + val + "!"
+                uppy.getPlugin('Transloadit').setOptions({
+                    params,
+                })
+            }
+        }
+
+        const uppy = new Uppy({
+            restrictions: {
+                maxNumberOfFiles: 1,
+                allowedFileTypes: ['image/*']
+            }
+        })
+            .use(Dashboard, {
+                inline: true,
+                target: '#drag-drop-area'
+            })
+            .use(ImageEditor, {
+                target: Dashboard,
+                quality: 0.8,
+                cropperOptions: {
+                    aspectRatio: 3 / 2 // Same aspect ratio as our overlay
+                }
+            })
+            .use(Transloadit, {
+                waitForEncoding: true,
+                params: baseParams,
+            })
+
+        uppy.on('complete', (result) => {
+            const resultImg = document.getElementById("result")
+            resultImg.src = result.transloadit[0].results.add_text[0].ssl_url
+        })
+
+
+        document.getElementById("name").addEventListener("change", function () {
+            updateName(this.value)
+        })
+    </script>
+</body>
+
+</html>
